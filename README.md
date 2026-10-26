@@ -1,6 +1,8 @@
 # Sellza
 
-Sellza is a React and TypeScript frontend built with Vite.
+Sellza is organized as a client/server workspace. The Vite + React + TypeScript
+application lives in `client/`; `server/` is reserved for future server-side
+work and currently contains no implementation.
 
 ## Development
 
@@ -16,6 +18,5 @@ npm run lint
 npm run build
 ```
 
-The current frontend foundation includes public, dashboard, and customer
-storefront routes with placeholder pages. Authentication, backend integrations,
-and final UI styling are not implemented yet.
+The client foundation includes public, dashboard, and customer storefront
+routes. Authentication and backend integrations are not implemented yet.
