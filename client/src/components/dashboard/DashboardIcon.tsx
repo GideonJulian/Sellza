@@ -13,6 +13,14 @@ export type DashboardIconName =
   | "profile"
   | "more"
   | "arrow"
+  | "back"
+  | "search"
+  | "location"
+  | "phone"
+  | "chat"
+  | "card"
+  | "package"
+  | "check"
   | "add"
   | "receipt";
 
@@ -90,6 +98,41 @@ const iconPaths: Record<DashboardIconName, ReactNode> = {
     </>
   ),
   arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+  back: <path d="M19 12H5m7 7-7-7 7-7" />,
+  search: (
+    <>
+      <circle cx="10.8" cy="10.8" r="6.8" />
+      <path d="m16 16 4.5 4.5" />
+    </>
+  ),
+  location: (
+    <>
+      <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  phone: (
+    <path d="M7.2 3.5H5a1.5 1.5 0 0 0-1.5 1.6A15.9 15.9 0 0 0 19 20.6a1.5 1.5 0 0 0 1.6-1.5v-2.2l-4.1-1.8-1.7 2.1a12.6 12.6 0 0 1-6.1-6.1l2.1-1.7-1.6-4.1Z" />
+  ),
+  chat: (
+    <>
+      <path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.8 8.8 0 0 1-3.5-.7L4 20l1.2-3.3A7.2 7.2 0 0 1 4 12c0-4.1 3.6-7.5 8-7.5s8 3.1 8 7Z" />
+      <path d="M9 10h6m-6 3h4" />
+    </>
+  ),
+  card: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 9h18m-14 5h4" />
+    </>
+  ),
+  package: (
+    <>
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4.5 7.7 7.5 4.4 7.5-4.4M12 12v8.5" />
+    </>
+  ),
+  check: <path d="m5 12 4 4L19 6" />,
   add: <path d="M12 5v14m-7-7h14" />,
   receipt: (
     <>
