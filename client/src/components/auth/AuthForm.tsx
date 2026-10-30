@@ -1,4 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/auth-context";
 import AuthHeader from "./AuthHeader";
 import AuthInput from "./AuthInput";
 import PasswordInput from "./PasswordInput";
@@ -18,7 +20,9 @@ type FormValues = {
 
 type FormField = keyof FormValues;
 type ValidationErrors = Partial<Record<FormField, string>>;
-type SubmissionState = "idle" | "loading" | "ready";
+type SubmissionState = "idle" | "loading" | "confirm";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const initialValues: FormValues = {
   fullName: "",
@@ -35,7 +39,7 @@ function validateForm(values: FormValues, mode: AuthMode): ValidationErrors {
 
   if (!values.email.trim()) {
     errors.email = "Enter your email address.";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+  } else if (!EMAIL_PATTERN.test(values.email.trim())) {
     errors.email = "Enter a valid email address.";
   }
 
@@ -46,6 +50,12 @@ function validateForm(values: FormValues, mode: AuthMode): ValidationErrors {
   }
 
   return errors;
+}
+
+function errorMessage(err: unknown) {
+  return err instanceof Error
+    ? err.message
+    : "Something went wrong. Please try again.";
 }
 
 function GoogleMark() {
@@ -115,38 +125,34 @@ function MobileLoginBrand() {
 }
 
 export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
+  const navigate = useNavigate();
+  const { signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
+
   const [values, setValues] = useState<FormValues>(initialValues);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submissionState, setSubmissionState] =
     useState<SubmissionState>("idle");
   const [notice, setNotice] = useState("");
+  const [formError, setFormError] = useState("");
   const isRegister = mode === "register";
   const isLoading = submissionState === "loading";
-
-  useEffect(() => {
-    if (!isLoading) return;
-
-    const timeout = window.setTimeout(() => {
-      setSubmissionState("ready");
-    }, 850);
-
-    return () => window.clearTimeout(timeout);
-  }, [isLoading]);
 
   function updateField(field: FormField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setSubmissionState("idle");
     setNotice("");
+    setFormError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isLoading) return;
 
     const nextErrors = validateForm(values, mode);
     setErrors(nextErrors);
     setNotice("");
+    setFormError("");
 
     if (Object.keys(nextErrors).length > 0) {
       setSubmissionState("idle");
@@ -154,10 +160,62 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
     }
 
     setSubmissionState("loading");
+
+    try {
+      const email = values.email.trim();
+
+      if (isRegister) {
+        const { needsConfirmation } = await signUp(
+          values.fullName.trim(),
+          email,
+          values.password,
+        );
+
+        if (needsConfirmation) {
+          setSubmissionState("confirm");
+          return;
+        }
+      } else {
+        await signIn(email, values.password);
+      }
+
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setFormError(errorMessage(err));
+      setSubmissionState("idle");
+    }
   }
 
-  function handleGoogleClick() {
-    setNotice("Google sign-in will be available when authentication is connected.");
+  async function handleGoogleClick() {
+    setFormError("");
+    setNotice("");
+    try {
+      // Redirects the browser to Google, then back to /dashboard
+      await signInWithGoogle();
+    } catch (err) {
+      setFormError(errorMessage(err));
+    }
+  }
+
+  async function handleForgotPassword() {
+    setFormError("");
+    setNotice("");
+
+    const email = values.email.trim();
+    if (!EMAIL_PATTERN.test(email)) {
+      setErrors((current) => ({
+        ...current,
+        email: "Enter your email address above first.",
+      }));
+      return;
+    }
+
+    try {
+      await resetPassword(email);
+      setNotice("If an account exists for that email, we've sent a reset link.");
+    } catch (err) {
+      setFormError(errorMessage(err));
+    }
   }
 
   const inputSurface = isRegister ? "bg-[#f1f3ff]" : "bg-[#f9f9ff]";
@@ -176,6 +234,15 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
         mode={mode}
       />
 
+      {formError && (
+        <p
+          role="alert"
+          className="mb-4 rounded-lg border border-[#ffdad6] bg-[#fff8f7] px-3 py-2.5 text-[13px] leading-[18px] text-[#ba1a1a]"
+        >
+          {formError}
+        </p>
+      )}
+
       {notice && (
         <p
           role="status"
@@ -185,17 +252,15 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
         </p>
       )}
 
-      {submissionState === "ready" && (
+      {submissionState === "confirm" && (
         <div
           role="status"
           className="mb-4 rounded-lg border border-[#79db8d] bg-[#f7fff2] px-3 py-3 text-[13px] leading-[18px] text-[#005320]"
         >
-          <p className="font-semibold">
-            {isRegister ? "Your details are ready." : "You're ready to log in."}
-          </p>
+          <p className="font-semibold">Check your email</p>
           <p className="mt-1">
-            Authentication isn&apos;t connected yet, so no account was created
-            and you haven&apos;t been signed in.
+            We sent a confirmation link to {values.email.trim()}. Click it to
+            activate your account, then log in.
           </p>
         </div>
       )}
@@ -246,11 +311,7 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
                 <button
                   type="button"
                   className="text-xs font-medium leading-4 text-[#006b2c] transition-colors hover:text-[#005320] hover:underline"
-                  onClick={() =>
-                    setNotice(
-                      "Password recovery will be available when authentication is connected.",
-                    )
-                  }
+                  onClick={handleForgotPassword}
                 >
                   Forgot password?
                 </button>
@@ -321,66 +382,56 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
           </div>
         )}
 
-        {submissionState === "ready" ? (
-          <button
-            type="button"
-            className="mt-1 inline-flex h-12 w-full items-center justify-center rounded-lg border border-[#bdcaba] bg-[#f1f3ff] px-4 text-sm font-semibold text-[#3e4a3d] transition-colors hover:bg-[#e9edff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#006b2c]"
-            onClick={() => setSubmissionState("idle")}
-          >
-            Edit details
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#006b2c] px-4 text-base font-semibold leading-6 text-white shadow-sm transition-colors hover:bg-[#00873a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005320] disabled:cursor-wait disabled:opacity-75"
-          >
-            {isLoading ? (
-              <>
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="size-4 animate-spin"
-                  fill="none"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                    stroke="currentColor"
-                    strokeOpacity=".3"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M21 12a9 9 0 0 0-9-9"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                Please wait...
-              </>
-            ) : (
-              <>
-                {isRegister ? "Create account" : "Log in"}
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="size-[18px]"
-                  fill="none"
-                >
-                  <path
-                    d="M5 12h14m-6-6 6 6-6 6"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </>
-            )}
-          </button>
-        )}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#006b2c] px-4 text-base font-semibold leading-6 text-white shadow-sm transition-colors hover:bg-[#00873a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005320] disabled:cursor-wait disabled:opacity-75"
+        >
+          {isLoading ? (
+            <>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="size-4 animate-spin"
+                fill="none"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeOpacity=".3"
+                  strokeWidth="3"
+                />
+                <path
+                  d="M21 12a9 9 0 0 0-9-9"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              Please wait...
+            </>
+          ) : (
+            <>
+              {isRegister ? "Create account" : "Log in"}
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="size-[18px]"
+                fill="none"
+              >
+                <path
+                  d="M5 12h14m-6-6 6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </>
+          )}
+        </button>
       </form>
 
       <FormDivider />

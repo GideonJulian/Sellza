@@ -1,12 +1,29 @@
+import { useAuth } from "../../context/auth-context";
 import DashboardIcon from "./DashboardIcon";
 
 export default function DashboardHeader() {
+  const { user, signOut } = useAuth();
+
+  const meta = user?.user_metadata ?? {};
+  const displayName: string =
+    meta.full_name ?? meta.name ?? user?.email ?? "there";
+  const firstName = displayName.split(" ")[0];
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+      // ProtectedRoute redirects to /auth once the session clears
+    } catch (err) {
+      console.error("Sign out failed:", err);
+    }
+  }
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-[#e5e7eb] bg-white lg:left-64">
       <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="hidden min-w-0 flex-col justify-center lg:flex">
-          <h1 className="text-base font-semibold leading-5 text-[#111827]">
-            Welcome to Sellza, Amina
+          <h1 className="truncate text-base font-semibold leading-5 text-[#111827]">
+            Welcome to Sellza, {firstName}
           </h1>
           <p className="text-xs leading-4 text-[#6b7280]">
             Set up your store and start selling online.
@@ -44,9 +61,15 @@ export default function DashboardHeader() {
             <DashboardIcon name="notifications" />
             <span className="absolute right-2 top-2 size-2 rounded-full bg-[#dc2626]" />
           </button>
-          <span className="grid size-8 place-items-center rounded-full bg-[#16a34a] text-white">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            aria-label="Sign out"
+            title={user?.email ? `Sign out (${user.email})` : "Sign out"}
+            className="grid size-8 place-items-center rounded-full bg-[#16a34a] text-white transition-colors hover:bg-[#15803d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#16a34a]"
+          >
             <DashboardIcon name="profile" className="size-[18px]" />
-          </span>
+          </button>
         </div>
       </div>
     </header>

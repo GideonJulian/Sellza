@@ -20,6 +20,8 @@ import Storefront from "./pages/store/Storefront";
 import ProductDetails from "./pages/store/ProductDetails";
 import Checkout from "./pages/store/Checkout";
 import OrderConfirmation from "./pages/store/OrderConfirmation";
+import { ProtectedRoute, GuestRoute } from "./components/auth/RouteGuards";
+import ResetPassword from "./pages/ResetPassword";
 
 const router = createBrowserRouter([
   {
@@ -109,6 +111,27 @@ const router = createBrowserRouter([
   {
     path: "/store/:storeSlug/order/:orderId",
     element: <OrderConfirmation />,
+  },
+  {
+    path: "/auth",
+    element: (
+      <GuestRoute>
+        <AuthPage />
+      </GuestRoute>
+    ),
+  },
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [ /* unchanged */ ],
+  },
+  {
+    path: "/auth/reset",
+    element: <ResetPassword />,
   },
 ]);
 
