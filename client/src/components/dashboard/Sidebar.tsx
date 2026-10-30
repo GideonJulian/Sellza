@@ -8,11 +8,14 @@ export default function Sidebar() {
       <div>
         <NavLink
           to="/dashboard"
-          className="flex h-16 items-center gap-2 border-b border-[#e5e7eb] px-6"
+          className="flex h-16 items-center gap-[7px] border-b border-[#e5e7eb] px-6"
           aria-label="Sellza dashboard overview"
         >
-          <span className="grid size-8 place-items-center rounded-lg bg-[#16a34a] text-xl font-bold text-white">
-            S
+          <span
+            className="grid h-[15px] w-[15px] rotate-[-12deg] place-items-center rounded-[50%_50%_50%_2px] bg-[#16a34a]"
+            aria-hidden="true"
+          >
+            <span className="h-[5px] w-[5px] rounded-full border border-white" />
           </span>
           <span className="font-['Plus_Jakarta_Sans'] text-lg font-semibold tracking-tight text-[#111827]">
             Sellza

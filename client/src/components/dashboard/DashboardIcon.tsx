@@ -21,6 +21,11 @@ export type DashboardIconName =
   | "card"
   | "package"
   | "check"
+  | "warning"
+  | "download"
+  | "external"
+  | "grid"
+  | "list"
   | "add"
   | "receipt";
 
@@ -133,6 +138,40 @@ const iconPaths: Record<DashboardIconName, ReactNode> = {
     </>
   ),
   check: <path d="m5 12 4 4L19 6" />,
+  warning: (
+    <>
+      <path d="m10.3 4.3-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-2.7l-8-14a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9v4m0 4h.01" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m7 10 5 5 5-5m-5 5V3" />
+    </>
+  ),
+  external: (
+    <>
+      <path d="M14 3h7v7m0-7-10 10" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </>
+  ),
+  list: (
+    <>
+      <path d="M9 6h12M9 12h12M9 18h12" />
+      <circle cx="4" cy="6" r=".75" />
+      <circle cx="4" cy="12" r=".75" />
+      <circle cx="4" cy="18" r=".75" />
+    </>
+  ),
   add: <path d="M12 5v14m-7-7h14" />,
   receipt: (
     <>
